@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { getOrCreateSubmissionToken } from '@/lib/submission';
-import type { SaveCategoryAnswersRequest } from '@shared/api-types';
+import { getOrCreateSubmissionToken, setSubmissionToken } from '@/lib/submission';
+import type { ResumeByCodeRequest, SaveCategoryAnswersRequest, SendRecoveryEmailRequest } from '@shared/api-types';
 
 /**
  * Ensures a submission exists for this browser + edition (creating one on
@@ -52,5 +52,24 @@ export function useSaveCategoryAnswers(token: string | null) {
       queryClient.invalidateQueries({ queryKey: ['submission', token] });
       queryClient.invalidateQueries({ queryKey: ['categoryAnswers', token, variables.categoryId] });
     },
+  });
+}
+
+/** Resolves a human-friendly recovery code back to a submission, storing its
+ *  token in localStorage for that edition so useSubmission picks it up. */
+export function useResumeByCode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ResumeByCodeRequest) => api.resumeByCode(body),
+    onSuccess: (data) => {
+      setSubmissionToken(data.editionId ?? '', data.token);
+      queryClient.setQueryData(['submission', data.token], data);
+    },
+  });
+}
+
+export function useSendRecoveryEmail(token: string | null) {
+  return useMutation({
+    mutationFn: (body: SendRecoveryEmailRequest) => api.sendRecoveryEmail(token as string, body),
   });
 }

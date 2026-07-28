@@ -313,6 +313,31 @@ const COLLECTIONS: CollectionDef[] = [
     ],
     relations: [{ collection: col('subscribers'), field: 'edition_id', related_collection: col('survey_editions') }],
   },
+  {
+    name: 'recovery_codes',
+    icon: 'vpn_key',
+    note: 'LocalRater — anonim devam etme kodu (1 submission = 1 kod, PII yok)',
+    primaryKey: uuidPk(),
+    fields: [
+      m2oUuid('submission_id', { required: true }),
+      str('code', { required: true, unique: true }),
+      dateCreated('created_at'),
+    ],
+    relations: [{ collection: col('recovery_codes'), field: 'submission_id', related_collection: col('submissions') }],
+  },
+  {
+    name: 'recovery_emails',
+    icon: 'forward_to_inbox',
+    note: 'LocalRater — opsiyonel e-posta ile devam etme linki (Directus Flow bunu dinler)',
+    primaryKey: uuidPk(),
+    fields: [
+      m2oUuid('submission_id', { required: true }),
+      str('code', { required: true }),
+      str('email', { required: true }),
+      dateCreated('created_at'),
+    ],
+    relations: [{ collection: col('recovery_emails'), field: 'submission_id', related_collection: col('submissions') }],
+  },
 ];
 
 // ----------------------------------------------------------------------------

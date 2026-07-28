@@ -16,8 +16,21 @@ export interface CreateOrResumeSubmissionRequest {
 export interface SubmissionStateResponse {
   token: string;
   submissionId: string;
+  editionId: string;
   isComplete: boolean;
   completedCategories: string[];
+  /** Human-friendly code (e.g. "amber-falcon-42") that resolves back to this
+   *  submission from any device, with no PII attached. Only present when the
+   *  server already knows it (creation, or an explicit resume-by-code call). */
+  recoveryCode?: string;
+}
+
+export interface ResumeByCodeRequest {
+  code: string;
+}
+
+export interface SendRecoveryEmailRequest {
+  email: string;
 }
 
 export interface SaveCategoryAnswersRequest {

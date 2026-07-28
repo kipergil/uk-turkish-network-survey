@@ -3,7 +3,9 @@ import type {
   CategoryResultsResponse,
   CreateOrResumeSubmissionRequest,
   EditionResultsOverview,
+  ResumeByCodeRequest,
   SaveCategoryAnswersRequest,
+  SendRecoveryEmailRequest,
   StatsResponse,
   SubmissionStateResponse,
   SubscribeRequest,
@@ -32,6 +34,12 @@ export const api = {
 
   getCategoryAnswers: (token: string, categoryId: string) =>
     request<CategoryAnswersResponse>(`/submissions/${token}/categories/${categoryId}/answers`),
+
+  resumeByCode: (body: ResumeByCodeRequest) =>
+    request<SubmissionStateResponse>('/submissions/resume', { method: 'POST', body: JSON.stringify(body) }),
+
+  sendRecoveryEmail: (token: string, body: SendRecoveryEmailRequest) =>
+    request<{ ok: true }>(`/submissions/${token}/recovery-email`, { method: 'POST', body: JSON.stringify(body) }),
 
   subscribe: (body: SubscribeRequest) =>
     request<{ ok: true }>('/subscribers', { method: 'POST', body: JSON.stringify(body) }),

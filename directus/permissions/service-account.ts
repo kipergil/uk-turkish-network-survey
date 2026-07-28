@@ -31,7 +31,7 @@ const SERVICE_EMAIL = 'localrater-service@example.com';
 
 const LR_COLLECTIONS = [
   'countries', 'survey_editions', 'categories', 'questions', 'question_options',
-  'regions', 'submissions', 'answers', 'subscribers',
+  'regions', 'submissions', 'answers', 'subscribers', 'recovery_codes', 'recovery_emails',
 ].map(col);
 
 async function api(path: string, init: RequestInit = {}) {

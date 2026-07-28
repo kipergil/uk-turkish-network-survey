@@ -12,6 +12,10 @@ export function getOrCreateSubmissionToken(editionId: string): { token: string; 
   return { token, isNew: true };
 }
 
+export function setSubmissionToken(editionId: string, token: string) {
+  localStorage.setItem(`${KEY_PREFIX}${editionId}`, token);
+}
+
 const COMPLETED_KEY_PREFIX = 'localrater:completed-categories:';
 
 export function getLocalCompletedCategories(editionId: string): string[] {
@@ -25,6 +29,17 @@ export function getLocalCompletedCategories(editionId: string): string[] {
 
 export function setLocalCompletedCategories(editionId: string, slugs: string[]) {
   localStorage.setItem(`${COMPLETED_KEY_PREFIX}${editionId}`, JSON.stringify(slugs));
+}
+
+const SAVE_PROGRESS_DISMISSED_PREFIX = 'localrater:save-progress-dismissed:';
+
+/** Whether the visitor already dismissed the "here's your recovery code" banner. */
+export function isSaveProgressDismissed(editionId: string): boolean {
+  return localStorage.getItem(`${SAVE_PROGRESS_DISMISSED_PREFIX}${editionId}`) === '1';
+}
+
+export function dismissSaveProgress(editionId: string) {
+  localStorage.setItem(`${SAVE_PROGRESS_DISMISSED_PREFIX}${editionId}`, '1');
 }
 
 const COUNTRY_KEY = 'localrater:selected-country';
