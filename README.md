@@ -31,11 +31,12 @@ npm run directus:schema:apply           # lr_* koleksiyon/alan/ilişkileri kurar
 npm run directus:permissions:apply      # Public policy'ye lr_* read/create izinlerini ekler
 npm run directus:service-account:apply  # server/ için ayrı, lr_*'a scoped "LocalRater Service" token'ı üretir
 npm run directus:seed                   # 1 country, 1 edition, 23 kategori, 99 soru
+npx tsx directus/flows/recovery-email-flow.ts  # opsiyonel e-posta kurtarma linki için Directus Flow'u kurar
 
 npm run dev   # server (:8787) + client (:5173) birlikte, Vite client'tan /api'ye proxy yapar
 ```
 
-Dört Directus script'i de **idempotent**'tir — tekrar çalıştırmak veri çoğaltmaz veya
+Tüm Directus script'leri **idempotent**'tir — tekrar çalıştırmak veri çoğaltmaz veya
 mevcut izinleri/alanları bozmaz, yalnızca eksik olanı tamamlar (ve önceki bir hatayı
 düzeltir, örn. yanlış `sort_field`).
 
@@ -106,6 +107,21 @@ uygular — hem `server/` hem `client/` aynı fonksiyonları kullanır.
    önceki cevapları forma geri doldurur (yalnızca kendi token'ınla, kendi cevaplarına).
 5. Anti-abuse: `express-rate-limit`, IP'nin kendisi değil salted SHA-256 hash'i anahtar
    olarak kullanılır (ham IP hiçbir yerde saklanmaz); anonimlik bozulmaz.
+
+## Kimlik & devam etme (recovery)
+
+Katılımcı kimliği hâlâ anonim `submission_token`'dır — bu değişmedi. Ayrıca her
+submission'a otomatik bir **insan-okunur kurtarma kodu** verilir (örn. `amber-falcon-42`,
+`lr_recovery_codes`'da, hiçbir PII olmadan, submission_id'ye 1:1). `/survey/categories`
+sayfasında bu kod bir kere gösterilir (kopyala butonu + kapatılabilir), ve `/resume`
+sayfasından herhangi bir cihazda tekrar girilerek anket kaldığı yerden açılır.
+
+Kullanıcı isterse (varsayılan değil, opsiyonel) bir e-posta da girebilir — bu, `lr_subscribers`'dan
+tamamen ayrı bir `lr_recovery_emails` koleksiyonuna yazılır ve `directus/flows/recovery-email-flow.ts`
+ile kurulan bir Directus Flow'u (Directus'un kendi SMTP'si, `mail` operasyonu) tetikleyerek
+resume linkini e-postalar. **Trade-off:** kod-tabanlı kurtarma tamamen anonim kalırken,
+e-posta yolu `{email, submission_id}` eşleşmesini DB'de yaratır — UI'da bu net şekilde
+"daha az anonim" olarak etiketlenmiştir. Detaylar: `directus/data-model.md`.
 
 ## Sonuç dashboard'u
 

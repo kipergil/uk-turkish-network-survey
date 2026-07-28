@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useSearch } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,24 +10,40 @@ import { useI18n } from '@/lib/i18n';
 export default function Resume() {
   const { t } = useI18n();
   const [, navigate] = useLocation();
-  const [code, setCode] = React.useState('');
+  const search = useSearch();
+  const codeFromLink = React.useMemo(() => new URLSearchParams(search).get('code') ?? '', [search]);
+  const [code, setCode] = React.useState(codeFromLink);
   const resume = useResumeByCode();
+
+  const submitCode = React.useCallback(
+    (value: string) => {
+      if (!value.trim()) return;
+      resume.mutate(
+        { code: value.trim().toLowerCase() },
+        {
+          onSuccess: () => {
+            // The edition's country isn't known from the code alone; UK is the
+            // only launched edition today, so default to it. Multi-country
+            // resume can pass the country along once more countries are live.
+            setSelectedCountry('UK');
+            navigate('/survey/categories');
+          },
+        },
+      );
+    },
+    [resume, navigate],
+  );
+
+  // Clicking the emailed resume link (/resume?code=...) resumes immediately,
+  // no retyping needed.
+  React.useEffect(() => {
+    if (codeFromLink) submitCode(codeFromLink);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codeFromLink]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code.trim()) return;
-    resume.mutate(
-      { code: code.trim().toLowerCase() },
-      {
-        onSuccess: () => {
-          // The edition's country isn't known from the code alone; UK is the
-          // only launched edition today, so default to it. Multi-country
-          // resume can pass the country along once more countries are live.
-          setSelectedCountry('UK');
-          navigate('/survey/categories');
-        },
-      },
-    );
+    submitCode(code);
   };
 
   return (

@@ -24,10 +24,35 @@ Mimari çok-ülkeli baştan hazır: `country_code = null` → CORE (tüm ülkele
 | `lr_submissions` | `id` (uuid) | edition_id(FK), country_code, submission_token, created_at, updated_at, is_complete, completed_categories(json), user_region_id(FK) | edition_id → lr_survey_editions.id; user_region_id → lr_regions.id |
 | `lr_answers` | `id` (uuid) | submission_id(FK), question_id(FK), value_text, value_number, value_json | submission_id → lr_submissions.id; question_id → lr_questions.id |
 | `lr_subscribers` | `id` (uuid) | edition_id(FK), email, created_at | edition_id → lr_survey_editions.id (cevaplarla **İLİŞKİLENDİRİLMEZ**) |
+| `lr_recovery_codes` | `id` (uuid) | submission_id(FK, unique), code(unique), created_at | submission_id → lr_submissions.id — PII yok |
+| `lr_recovery_emails` | `id` (uuid) | submission_id(FK), code, email, created_at | submission_id → lr_submissions.id — bir Directus Flow bunu dinler |
 
 **Kritik kural:** `lr_questions.category_id` NOT NULL — kategorisiz soru olamaz.
 `status = active | hidden` (`lr_categories`, `lr_questions`) ile yayına alınır/çıkarılır;
 silme gerekmez.
+
+## Kimlik & devam etme (recovery) modeli
+
+Katılımcı kimliği hâlâ anonim `submission_token`'dır (nanoid, localStorage). Buna ek
+olarak her submission oluşturulduğunda **insan-okunur bir kurtarma kodu** (örn.
+`amber-falcon-42`) üretilir ve `lr_recovery_codes`'a yazılır — bu kod submission_id'ye
+1:1 bağlıdır ve hiçbir kişisel bilgi içermez. `POST /api/submissions/resume {code}`
+bu kodu herhangi bir cihazdan token'a çevirir.
+
+Kullanıcı isterse (opsiyonel, varsayılan değil) bir e-posta da girebilir:
+`POST /api/submissions/:token/recovery-email {email}` bunu `lr_subscribers`'a DEĞİL,
+ayrı bir `lr_recovery_emails` koleksiyonuna yazar (`{submission_id, code, email}`).
+Bu satırın oluşturulması, `directus/flows/recovery-email-flow.ts` ile kurulan bir
+Directus Flow'u (event hook: `items.create` on `lr_recovery_emails`, `mail` operasyonu,
+Directus'un kendi SMTP'si) tetikler ve `{APP_URL}/resume?code=...` linkini e-postayla
+gönderir.
+
+**Anonimlik notu:** kod-tabanlı kurtarma tamamen anonim kalır (kodu kimseye söylemediği
+sürece kimse kodu bir kişiyle eşleştiremez). E-posta yolunu seçen kullanıcılar için
+`{email, submission_id}` eşleşmesi DB'de var olur — bu, admin erişimi olan biri için
+teorik olarak o kişinin cevaplarıyla eşleştirilebilir anlamına gelir. Bu yüzden e-posta
+alanı UI'da net şekilde "daha az anonim" olarak etiketlenir ve varsayılan olarak
+gösterilmez/zorunlu değildir.
 
 ## Soru tipleri (10)
 
