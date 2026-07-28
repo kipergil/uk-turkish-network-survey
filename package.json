@@ -1,0 +1,21 @@
+{
+  "name": "localrater",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LocalRater — UK'de yaşayan Türkler için yıllık, topluluk temelli census/survey uygulaması.",
+  "type": "module",
+  "scripts": {
+    "directus:schema:apply": "tsx directus/schema/apply.ts",
+    "directus:permissions:apply": "tsx directus/permissions/apply.ts",
+    "directus:seed": "tsx directus/seed/localrater-seed.ts"
+  },
+  "dependencies": {
+    "@directus/sdk": "^23.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  }
+}
