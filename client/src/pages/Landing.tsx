@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -88,6 +88,9 @@ export default function Landing() {
               {t('landing.viewResults')}
             </Button>
           </div>
+          <Link href="/resume" className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            {t('recovery.resumeLink')}
+          </Link>
         </div>
       )}
     </div>

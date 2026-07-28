@@ -1,12 +1,14 @@
+import * as React from 'react';
 import { Link } from 'wouter';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LoadingState, ErrorState, EmptyState } from '@/components/StateViews';
+import { SaveProgressCard } from '@/components/SaveProgressCard';
 import { useCategories, useOpenEdition } from '@/hooks/useSurveyData';
 import { useSubmission } from '@/hooks/useSubmission';
 import { useI18n } from '@/lib/i18n';
-import { getSelectedCountry } from '@/lib/submission';
+import { getSelectedCountry, isSaveProgressDismissed } from '@/lib/submission';
 import { localize } from '@shared/types';
 import * as Icons from 'lucide-react';
 
@@ -27,7 +29,8 @@ export default function SurveyCategories() {
   const country = getSelectedCountry() ?? 'UK';
   const { data: edition, isLoading: editionLoading, error: editionError } = useOpenEdition(country);
   const { data: categories, isLoading, error } = useCategories(edition?.id, country);
-  const { submission } = useSubmission(edition?.id);
+  const { token, submission } = useSubmission(edition?.id);
+  const [bannerDismissed, setBannerDismissed] = React.useState(false);
 
   if (editionLoading || isLoading) return <LoadingState />;
   if (editionError || error) return <ErrorState />;
@@ -35,6 +38,8 @@ export default function SurveyCategories() {
   if (!categories || categories.length === 0) return <EmptyState />;
 
   const completed = new Set(submission?.completedCategories ?? []);
+  const showSaveProgress =
+    !!token && !!submission?.recoveryCode && !bannerDismissed && !isSaveProgressDismissed(edition.id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,6 +47,15 @@ export default function SurveyCategories() {
         <h1 className="text-2xl font-bold">{t('categories.title')}</h1>
         <p className="text-muted-foreground">{t('categories.subtitle')}</p>
       </div>
+
+      {showSaveProgress && (
+        <SaveProgressCard
+          editionId={edition.id}
+          token={token as string}
+          recoveryCode={submission!.recoveryCode as string}
+          onDismiss={() => setBannerDismissed(true)}
+        />
+      )}
 
       {edition.status === 'closed' && <EmptyState message={t('state.editionClosed')} />}
 

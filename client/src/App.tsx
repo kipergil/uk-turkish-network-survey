@@ -11,6 +11,7 @@ import SurveyCategories from '@/pages/SurveyCategories';
 import SurveyCategory from '@/pages/SurveyCategory';
 import Results from '@/pages/Results';
 import ResultsCategory from '@/pages/ResultsCategory';
+import Resume from '@/pages/Resume';
 import AdminLayout from '@/pages/admin/AdminLayout';
 import NotFound from '@/pages/NotFound';
 
@@ -27,6 +28,7 @@ function Shell() {
           <Route path="/survey/:categorySlug" component={SurveyCategory} />
           <Route path="/results" component={Results} />
           <Route path="/results/:categorySlug" component={ResultsCategory} />
+          <Route path="/resume" component={Resume} />
           <Route path="/admin/:rest*" component={AdminLayout} />
           <Route component={NotFound} />
         </Switch>
