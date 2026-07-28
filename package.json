@@ -12,6 +12,7 @@
     "dev:client": "vite",
     "dev:server": "tsx watch server/src/index.ts",
     "dev": "concurrently -k -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
+    "build": "vite build",
     "build:client": "vite build",
     "preview:client": "vite preview",
     "start:server": "tsx server/src/index.ts",
