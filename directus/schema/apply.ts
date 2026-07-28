@@ -11,7 +11,7 @@
 import 'dotenv/config';
 import {
   readCollections, createCollection, updateCollection,
-  readFieldsByCollection, createField,
+  readFieldsByCollection, createField, updateField,
   readRelations, createRelation,
 } from '@directus/sdk';
 import { client, col } from '../lib/client.js';
@@ -50,7 +50,7 @@ const uuidPk = (): FieldDef => ({
   schema: { is_primary_key: true, has_auto_increment: false, length: 36 },
 });
 
-const str = (field: string, opts: { required?: boolean; note?: string; choices?: string[]; default?: string } = {}): FieldDef => ({
+const str = (field: string, opts: { required?: boolean; note?: string; choices?: string[]; default?: string; unique?: boolean } = {}): FieldDef => ({
   field,
   type: 'string',
   meta: {
@@ -59,7 +59,7 @@ const str = (field: string, opts: { required?: boolean; note?: string; choices?:
     required: opts.required ?? false,
     options: opts.choices ? { choices: opts.choices.map((c) => ({ text: c, value: c })) } : undefined,
   },
-  schema: { is_nullable: !(opts.required ?? false), default_value: opts.default ?? null },
+  schema: { is_nullable: !(opts.required ?? false), default_value: opts.default ?? null, is_unique: opts.unique ?? false },
 });
 
 const text = (field: string, note?: string): FieldDef => ({
@@ -272,7 +272,7 @@ const COLLECTIONS: CollectionDef[] = [
     fields: [
       m2oUuid('edition_id', { required: true }),
       str('country_code'),
-      str('submission_token', { required: true }),
+      str('submission_token', { required: true, unique: true }),
       dateCreated('created_at'),
       dateUpdated('updated_at'),
       bool('is_complete', false),
@@ -349,11 +349,22 @@ async function run() {
 
   for (const def of COLLECTIONS) {
     const collectionName = col(def.name);
-    const existingFields = new Set((await client.request(readFieldsByCollection(collectionName as any))).map((f: any) => f.field));
+    const existingFieldRows = await client.request(readFieldsByCollection(collectionName as any));
+    const existingByName = new Map((existingFieldRows as any[]).map((f: any) => [f.field, f]));
     for (const f of def.fields) {
-      if (existingFields.has(f.field)) continue;
-      await client.request(createField(collectionName as any, f as any));
-      console.log(`  + field ${collectionName}.${f.field}`);
+      const existing = existingByName.get(f.field);
+      if (!existing) {
+        await client.request(createField(collectionName as any, f as any));
+        console.log(`  + field ${collectionName}.${f.field}`);
+        continue;
+      }
+      // Repair pass: pick up schema changes (e.g. is_unique) made to a field def after initial creation.
+      const desiredUnique = (f.schema as any)?.is_unique ?? false;
+      const currentUnique = existing.schema?.is_unique ?? false;
+      if (desiredUnique !== currentUnique) {
+        await client.request(updateField(collectionName as any, f.field, { schema: { is_unique: desiredUnique } } as any));
+        console.log(`  ~ fixed is_unique for ${collectionName}.${f.field}: ${currentUnique} -> ${desiredUnique}`);
+      }
     }
   }
 
